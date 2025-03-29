@@ -33,6 +33,7 @@ OPENING = """#import "../typslides/lib.typ": *
 )
 
 #table-of-contents()
+
 """
 
 
@@ -128,7 +129,7 @@ def process_slide(slide: str) -> str:
     match slide:
         case s if is_h1(s):
             slide_title = title(s)
-            typst_content = f"#section[\n{slide_title}\n]\n"
+            typst_content = f"#section[{slide_title}]"
 
             if len(slide.split("\n")) > 1:
                 typst_content += "\n\n" + make_slide(slide)
@@ -237,7 +238,7 @@ def main(markdown_file: str, output: Optional[str] = None):
             progress.advance(task)
 
     # Join all slides and write to output file
-    full_typst += "\n\n".join(typst_slides)
+    full_typst += "\n".join(typst_slides)
 
     with open(output, "w", encoding="utf-8") as f:
         f.write(full_typst)

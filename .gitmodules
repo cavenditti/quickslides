@@ -1,0 +1,3 @@
+[submodule "typslides"]
+	path = typslides
+	url = git@github.com:cavenditti/typslides.git

@@ -1,18 +1,6 @@
 # MDSlides
 
-Convert Markdown files to Typst slides presentations.
-
-## Installation
-
-```bash
-pip install mdslides
-```
-
-For development:
-
-```bash
-pip install -e .
-```
+Convert Markdown files to PDF slides presentations, using [typst](https://github.com/typst/typst) and [typeslides](https://github.com/cavenditti/typslides).
 
 ## Usage
 
@@ -22,8 +10,8 @@ pip install -e .
 # Basic usage
 mdslides your_presentation.md
 
-# Specify output file
-mdslides your_presentation.md -o custom_output.typ
+# Specify output typst file
+mdslides your_presentation.md --no-compile -o custom_output.typ
 ```
 
 ### As a Library
@@ -37,7 +25,7 @@ with open("your_presentation.md", "r") as f:
 
 # Convert to typst
 typst_content = convert_markdown_to_typst(
-    markdown_content, 
+    markdown_content,
     title="My Presentation",
     subtitle="A great presentation",
     author="Your Name",

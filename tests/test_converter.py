@@ -24,7 +24,7 @@ def test_convert_links() -> None:
     """Test link conversion."""
     assert (
         convert_text("[text](https://example.com)")
-        == "#link(https://example.com)[text]"
+        == '#link("https://example.com")[text]'
     )
 
 
@@ -75,4 +75,3 @@ This is a test presentation.
     assert "- Bullet point" in result
     assert "*Bold text*" in result
     assert "_italic text_" in result
-

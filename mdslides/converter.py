@@ -17,7 +17,7 @@ CONVERSIONS = [
     (re.compile(r"\*\*([^*]+)\*\*"), r"*\1*"),
     (re.compile(r"__([^_]+)__"), r"*\1*"),
     # Links
-    (re.compile(r"\[([^\]]+)\]\(([^)]+)\)"), r"#link(\2)[\1]"),
+    (re.compile(r"\[([^\]]+)\]\(([^)]+)\)"), r'#link("\2")[\1]'),
     # Images
     (re.compile(r"!\[([^\]]*)\]\(([^)]+)\)"), r"#image(\2, caption: \"\1\")"),
     # Lists
@@ -48,10 +48,6 @@ def indent_lines(text: str, indent: str = "  ") -> str:
 
 def convert_markdown_to_typst(
     markdown_content: str,
-    title: str = "",
-    subtitle: str = "",
-    author: str = "",
-    info: str = "",
 ) -> str:
     """
     Convert markdown content to typst slides.
@@ -83,22 +79,67 @@ def convert_markdown_to_typst(
         # Remove front matter from content
         markdown_content = markdown_content[front_matter_match.end() :]
 
-    # Extract presentation info
-    title = front_matter.get("title", title)
-    subtitle = front_matter.get("subtitle", subtitle)
-    author = front_matter.get("author", author)
-    info = front_matter.get("date", info) or front_matter.get("info", info)
-
     # Generate the typst document
-    typst_content = generate_typst_document(
-        markdown_content, title, subtitle, author, info
-    )
+    typst_content = generate_typst_document(front_matter, markdown_content)
 
     return typst_content
 
 
+def generate_typst_header(front_matter: dict[str, str]) -> str:
+    """
+    Generate a complete typst document from markdown content.
+
+    Args:
+        markdown_content: The markdown content to convert
+        title: The presentation title
+        subtitle: The presentation subtitle
+        author: The presentation author
+        info: Additional presentation info
+
+    Returns:
+        The complete typst document as a string
+    """
+
+    # Extract presentation info
+    title = front_matter.get("title", "")
+    subtitle = front_matter.get("subtitle", "")
+    author = front_matter.get("author", "")
+    info = front_matter.get("date", "") or front_matter.get("info", "")
+    logo = front_matter.get("logo", "img/logo.svg")
+    logo_alt = front_matter.get("logo-alt", "img/alt.svg")
+    logo_comp = f'image("{logo}", width: 13.75em, height: 13.5em)'
+    logo_alt_comp = f'image("{logo_alt}", width: 50em, height: 50em)'
+
+    website_url = front_matter.get("website-url", "")
+    email = front_matter.get("email", "")
+
+    # Fill in document header
+    return f"""#import "../typslides/lib.typ": *
+
+// Project configuration
+#show: typslides.with(
+  logo: {logo_comp},
+  logo-alt: {logo_alt_comp},
+  website-url: "{website_url}",
+  email: "{email}",
+  ratio: "16-9",
+)
+
+#front-slide(
+  title: "{title}",
+  subtitle: "{subtitle}",
+  authors: "{author}",
+  info: "{info}",
+)
+
+#table-of-contents()
+
+"""
+
+
 def generate_typst_document(
-    markdown_content: str, title: str, subtitle: str, author: str, info: str
+    front_matter: dict[str, str],
+    markdown_content: str,
 ) -> str:
     """
     Generate a complete typst document from markdown content.
@@ -114,23 +155,7 @@ def generate_typst_document(
         The complete typst document as a string
     """
     # Typst document header
-    header = f"""#import "../typslides/lib.typ": *
-
-// Project configuration
-#show: typslides.with(
-  ratio: "16-9",
-)
-
-#front-slide(
-  title: "{title}",
-  subtitle: "{subtitle}",
-  authors: "{author}",
-  info: "{info}",
-)
-
-#table-of-contents()
-
-"""
+    header = generate_typst_header(front_matter)
 
     # Process slides
     slides = process_slides(markdown_content)

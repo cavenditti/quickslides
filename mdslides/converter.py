@@ -2,7 +2,6 @@
 
 import re
 
-
 # Markdown to Typst conversion mappings
 CONVERSIONS = [
     # Headers are handled separately

@@ -1,5 +1,8 @@
 """Command-line interface for MDSlides."""
 
+import shutil
+import subprocess
+import tempfile
 from pathlib import Path
 
 import click
@@ -7,10 +10,6 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
 from mdslides.converter import convert_markdown_to_typst
-import subprocess
-import shutil
-import tempfile
-import os
 
 console = Console()
 
@@ -79,7 +78,6 @@ def main(markdown_file: str, output: str | None, compile: bool) -> int:
 
     # Compile the Typst file if requested
     if compile:
-
         typst_cmd = shutil.which("typst")
         if not typst_cmd:
             console.print(

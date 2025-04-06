@@ -1,6 +1,6 @@
 [project]
 name = "mdslides-typst"
-version = "0.1.0"
+version = "0.1.2"
 description = "Convert Markdown to PDF slides using Typst and typslides"
 readme = "README.md"
 requires-python = ">=3.12"

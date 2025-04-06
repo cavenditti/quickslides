@@ -41,76 +41,68 @@ def escape_typst_chars(text: str) -> str:
 def convert_token(token: dict[str, Any]) -> str:
     """Convert a single AST token to typst markup."""
     token_type = token["type"]
-    match token_type:
-        case "paragraph":
-            return convert_ast_to_typst(token["children"]) + "\n\n"
-        case "text":
-            # Escape special characters in raw text
-            return escape_typst_chars(token["raw"])
-        case "emphasis":
-            return f"_{convert_ast_to_typst(token['children'])}_"
-        case "strong":
-            return f"*{convert_ast_to_typst(token['children'])}*"
-        case "link":
-            link_text = convert_ast_to_typst(token["children"])
-            return f'#link("{token["attrs"]["url"]}")[{escape_typst_chars(link_text)}]'
-        case "image":
-            alt_text = escape_typst_chars(token.get("alt", ""))
-            if alt_text:
-                return f'#figure(#image("{token["attrs"]["url"]}"), caption: "{escape_typst_chars(alt_text)}")'
-            return f'#image("{token["attrs"]["url"]}")'
-        case "codespan":
-            # Code spans are verbatim, no need to escape their content
-            return f"`{token['raw']}`"
-        case "code":
-            lang = token.get("lang", "")
-            # Code blocks are verbatim, no need to escape their content
-            return f"```{lang}\n{token['text']}\n```"
-        case "block_text":
+
+    # dict mapping token types to handler functions
+    token_handlers = {
+        "paragraph": lambda t: convert_ast_to_typst(t["children"]) + "\n\n",
+        "text": lambda t: escape_typst_chars(t["raw"]),
+        "emphasis": lambda t: f"_{convert_ast_to_typst(t['children'])}_",
+        "strong": lambda t: f"*{convert_ast_to_typst(t['children'])}*",
+        "link": lambda t: f'#link("{t["attrs"]["url"]}")[{escape_typst_chars(convert_ast_to_typst(t["children"]))}]',
+        "image": lambda t: (
+            f'#figure(#image("{t["attrs"]["url"]}"), caption: "{escape_typst_chars(t.get("alt", ""))}")'
+            if t.get("alt", "")
+            else f'#image("{t["attrs"]["url"]}")'
+        ),
+        "codespan": lambda t: f"`{t['raw']}`",
+        "code": lambda t: f"```{t.get('lang', '')}\n{t['text']}\n```",
+        "block_text": lambda t: convert_ast_to_typst(t["children"]),
+        "block_quote": lambda t: f"#quote[{convert_ast_to_typst(t['children'])}]",
+        "list": lambda t: _handle_list(t),
+        "heading": lambda t: f"={'=' * (t['attrs']['level'] - 1)} {convert_ast_to_typst(t['children'])}\n\n",
+        "thematic_break": lambda t: "#line(length: 100%)\n\n",
+        "table": lambda t: _handle_table(t),
+    }
+
+    def _handle_list(t: dict[str, Any]) -> str:
+        """Handle list conversion helper."""
+        return (
+            "\n".join(
+                [
+                    f"{'  ' * t['attrs'].get('depth', 0)}{'+' if t['attrs'].get('ordered', False) else '-'} "
+                    f"{convert_ast_to_typst(item['children']).strip()}"
+                    for item in t["children"]
+                ]
+            )
+            + "\n\n"
+        )
+
+    def _handle_table(t: dict[str, Any]) -> str:
+        """Handle table conversion helper."""
+        headers = t.get("header", [])
+        rows = t.get("rows", [])
+        num_cols = len(headers) if headers else (len(rows[0]) if rows else 2)
+
+        result = f"#table(columns: {num_cols})"
+        if headers:
+            result += "["
+            for header in headers:
+                result += f"[*{convert_ast_to_typst(header)}*]"
+
+        for row in rows:
+            for cell in row:
+                result += f"[{convert_ast_to_typst(cell)}]"
+
+        return result
+
+    def _handle_default(t: dict[str, Any]) -> str:
+        if "children" in token:
             return convert_ast_to_typst(token["children"])
-        case "block_quote":
-            return f"#quote[{convert_ast_to_typst(token['children'])}]"
-        case "list":
-            list_items = []
-            is_ordered = token["attrs"].get("ordered", False)
-            depth = token["attrs"].get("depth", 0)
-            marker = "+" if is_ordered else "-"
-
-            for item in token["children"]:
-                # Handle nested lists
-                item_content = convert_ast_to_typst(item["children"]).strip()
-                # Indent base on depth
-                list_items.append(f"{"  " * depth}{marker} {item_content}")
-
-            return "\n".join(list_items) + "\n\n"
-        case "heading":
-            level = token["attrs"]["level"]
-            content = convert_ast_to_typst(token["children"])
-            return f"={'=' * (level - 1)} {content}\n\n"
-        case "thematic_break":
-            return "#line(length: 100%)\n\n"
-        case "table":
-            # Basic table support
-            headers = token.get("header", [])
-            rows = token.get("rows", [])
-            num_cols = len(headers) if headers else (len(rows[0]) if rows else 2)
-
-            result = f"#table(columns: {num_cols})"
-            if headers:
-                result += "["
-                for header in headers:
-                    result += f"[*{convert_ast_to_typst(header)}*]"
-
-            for row in rows:
-                for cell in row:
-                    result += f"[{convert_ast_to_typst(cell)}]"
-
-            return result
-        case _:
-            # For unknown token types, try to process children if available
-            if "children" in token:
-                return convert_ast_to_typst(token["children"])
+        else:
             return ""
+
+    # Use the handler from the dictionary, or otherwise process children if available
+    return token_handlers.get(token_type, _handle_default)(token)
 
 
 def indent_lines(text: str, indent: str = "  ") -> str:

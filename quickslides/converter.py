@@ -1,45 +1,110 @@
 """Markdown to Typst conversion utilities."""
 
 import re
+from typing import Any
 
-# Markdown to Typst conversion mappings
-CONVERSIONS = [
-    # Headers are handled separately
-    # Code blocks
-    (re.compile(r"```(\w*)\n(.*?)\n```", re.DOTALL), r"```\1\n\2\n```"),
-    # Inline code
-    (re.compile(r"`([^`]+)`"), r"`\1`"),
-    # Italic text
-    (re.compile(r"(?<!\*)\*([^*]+)\*(?!\*)"), r"_\1_"),
-    (re.compile(r"(?<!_)_([^_]+)_(?!_)"), r"_\1_"),
-    # Bold text
-    (re.compile(r"\*\*([^*]+)\*\*"), r"*\1*"),
-    (re.compile(r"__([^_]+)__"), r"*\1*"),
-    # Headers
-    (re.compile(r"#"), r"="),
-    # Links
-    (re.compile(r"\[([^\]]+)\]\(([^)]+)\)"), r'#link("\2")[\1]'),
-    # Images
-    (re.compile(r"!\[([^\]]*)\]\(([^)]+)\)"), r"#image(\2, caption: \"\1\")"),
-    # Lists
-    (re.compile(r"^\s*[-*+]\s+(.*?)$", re.MULTILINE), r"- \1"),
-    (re.compile(r"^\s*(\d+)[.)]\s+(.*?)$", re.MULTILINE), r"+ \2"),
-    # Blockquotes
-    (re.compile(r"^\s*>\s+(.*?)$", re.MULTILINE), r"#quote[\1]"),
-    # Horizontal rule
-    (re.compile(r"^\s*[-*_]{3,}\s*$", re.MULTILINE), r"#line(length: 100%)"),
-    # Tables - complex, minimal support
-    (re.compile(r"\|([^|]+)\|([^|]+)\|"), r"#table(columns: 2)[\1][\2]"),
-]
+import mistune
 
 
 def convert_text(text: str) -> str:
-    """Apply all markdown to typst conversions to the text in a single pass."""
-    # Create a list of conversion patterns in a specific order to avoid interference
-    result = text
-    for pattern, replacement in CONVERSIONS:
-        result = re.sub(pattern, replacement, result)
-    return result
+    """Convert markdown text to typst using mistune parser."""
+    # Parse markdown to AST
+    markdown = mistune.create_markdown(renderer=None)
+    ast = markdown(text)
+    if isinstance(ast, str):
+        return ast
+
+    # Convert AST to typst
+    return convert_ast_to_typst(ast)
+
+
+def convert_ast_to_typst(tokens: list[dict[str, Any]]) -> str:
+    """Convert markdown AST to typst markup."""
+    result = []
+    for token in tokens:
+        result.append(convert_token(token))
+    return "".join(result).strip()
+
+
+def escape_typst_chars(text: str) -> str:
+    """Escape characters that have special meaning in Typst."""
+    # List of characters that need escaping in Typst (square brackets, braces, and other special chars)
+    special_chars = r'#$\\{}[]_*"`'
+
+    # Create a regex pattern that matches any special character
+    pattern = re.compile(f"([{re.escape(special_chars)}])")
+
+    # Add a backslash before each special character
+    return pattern.sub(r"\\\1", text)
+
+
+def convert_token(token: dict[str, Any]) -> str:
+    """Convert a single AST token to typst markup."""
+    token_type = token["type"]
+    match token_type:
+        case "paragraph":
+            return convert_ast_to_typst(token["children"]) + "\n\n"
+        case "text":
+            # Escape special characters in raw text
+            return escape_typst_chars(token["raw"])
+        case "emphasis":
+            return f"_{convert_ast_to_typst(token['children'])}_"
+        case "strong":
+            return f"*{convert_ast_to_typst(token['children'])}*"
+        case "link":
+            link_text = convert_ast_to_typst(token["children"])
+            return f'#link("{token["attrs"]["url"]}")[{escape_typst_chars(link_text)}]'
+        case "image":
+            alt_text = escape_typst_chars(token.get("alt", ""))
+            if alt_text:
+                return f'#figure(#image("{token["attrs"]["url"]}"), caption: "{escape_typst_chars(alt_text)}")'
+            return f'#image("{token["attrs"]["url"]}")'
+        case "codespan":
+            # Code spans are verbatim, no need to escape their content
+            return f"`{token['raw']}`"
+        case "code":
+            lang = token.get("lang", "")
+            # Code blocks are verbatim, no need to escape their content
+            return f"```{lang}\n{token['text']}\n```"
+        case "block_text":
+            return convert_ast_to_typst(token["children"])
+        case "block_quote":
+            return f"#quote[{convert_ast_to_typst(token['children'])}]"
+        case "list":
+            list_items = []
+            marker = "+" if token.get("ordered", False) else "-"
+            for item in token["children"]:
+                item_content = convert_ast_to_typst(item["children"]).strip()
+                list_items.append(f"{marker} {item_content}")
+            return "\n".join(list_items) + "\n\n"
+        case "heading":
+            level = token["attrs"]["level"]
+            content = convert_ast_to_typst(token["children"])
+            return f"={'=' * (level - 1)} {content}\n\n"
+        case "thematic_break":
+            return "#line(length: 100%)\n\n"
+        case "table":
+            # Basic table support
+            headers = token.get("header", [])
+            rows = token.get("rows", [])
+            num_cols = len(headers) if headers else (len(rows[0]) if rows else 2)
+
+            result = f"#table(columns: {num_cols})"
+            if headers:
+                result += "["
+                for header in headers:
+                    result += f"[*{convert_ast_to_typst(header)}*]"
+
+            for row in rows:
+                for cell in row:
+                    result += f"[{convert_ast_to_typst(cell)}]"
+
+            return result
+        case _:
+            # For unknown token types, try to process children if available
+            if "children" in token:
+                return convert_ast_to_typst(token["children"])
+            return ""
 
 
 def indent_lines(text: str, indent: str = "  ") -> str:
@@ -65,9 +130,7 @@ def convert_markdown_to_typst(
     """
     # Parse front matter if present
     front_matter: dict[str, str] = {}
-    front_matter_match = re.match(
-        r"^---\s*\n(.*?)\n---\s*\n", markdown_content, re.DOTALL
-    )
+    front_matter_match = re.match(r"^---\s*\n(.*?)\n---\s*\n", markdown_content, re.DOTALL)
 
     if front_matter_match:
         front_matter_content = front_matter_match.group(1)

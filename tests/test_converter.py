@@ -50,6 +50,9 @@ This is a test presentation.
 
 ## Slide One
 
+### Slide One Header
+#### Slide One Sub-Header
+
 - Bullet point
 - Another bullet point
 
@@ -69,6 +72,8 @@ This is a test presentation.
     # Check that we have a section and slides
     assert "#section[Introduction]" in result
     assert '#slide(title: "Slide One")' in result
+    assert '= Slide One Header' in result
+    assert '== Slide One Sub-Header' in result
     assert '#slide(title: "Slide Two")' in result
 
     # Check that formatting is preserved

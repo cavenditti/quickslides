@@ -15,6 +15,8 @@ CONVERSIONS = [
     # Bold text
     (re.compile(r"\*\*([^*]+)\*\*"), r"*\1*"),
     (re.compile(r"__([^_]+)__"), r"*\1*"),
+    # Headers
+    (re.compile(r"#"), r"="),
     # Links
     (re.compile(r"\[([^\]]+)\]\(([^)]+)\)"), r'#link("\2")[\1]'),
     # Images

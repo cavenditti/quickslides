@@ -9,12 +9,12 @@ import click
 from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 
-from mdslides.converter import convert_markdown_to_typst
+from quickslides.converter import convert_markdown_to_typst
 
 console = Console()
 
 
-@click.command("mdslides")
+@click.command("quickslides")
 @click.argument(
     "markdown_file", type=click.Path(exists=True, dir_okay=False, readable=True)
 )

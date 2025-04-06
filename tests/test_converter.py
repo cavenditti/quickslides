@@ -1,6 +1,6 @@
 """Tests for markdown to typst conversion."""
 
-from mdslides.converter import convert_markdown_to_typst, convert_text
+from quickslides.converter import convert_markdown_to_typst, convert_text
 
 
 def test_convert_bold_text() -> None:

@@ -1,4 +1,4 @@
-# mdslides-typst
+# quickslides
 
 Convert Markdown files to PDF slides presentations, using [typst](https://github.com/typst/typst) and [typeslides](https://github.com/cavenditti/typslides).
 
@@ -8,16 +8,16 @@ Convert Markdown files to PDF slides presentations, using [typst](https://github
 
 ```bash
 # Basic usage
-mdslides your_presentation.md
+quickslides your_presentation.md
 
 # Specify output typst file
-mdslides your_presentation.md --no-compile -o custom_output.typ
+quickslides your_presentation.md --no-compile -o custom_output.typ
 ```
 
 ### As a Library
 
 ```python
-from mdslides import convert_markdown_to_typst
+from quickslides import convert_markdown_to_typst
 
 # Read markdown content
 with open("your_presentation.md", "r") as f:

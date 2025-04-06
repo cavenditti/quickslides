@@ -1,5 +1,5 @@
 [project]
-name = "mdslides-typst"
+name = "quickslides"
 description = "Convert Markdown to PDF slides using Typst and typslides"
 dynamic = ["version"]
 readme = "README.md"
@@ -14,15 +14,11 @@ build-backend = "hatchling.build"
 [tool.hatch.version]
 source = "versioningit"
 
-# Change import package name to mdslides instead of mdslides-typst
-[tool.hatch.build.targets.wheel]
-packages = ["mdslides"]
-
 [tool.hatch.build.targets.wheel.force-include]
 "typslides" = "typslides"
 
 [project.scripts]
-mdslides = "mdslides.cli:main"
+quickslides = "quickslides.cli:main"
 
 [tool.ruff]
 target-version = "py312"
@@ -38,7 +34,7 @@ select = ["E", "F", "B", "I", "UP", "N", "PL", "RUF", "ANN", "W"]
 ignore = []
 
 [tool.ruff.lint.isort]
-known-first-party = ["mdslides"]
+known-first-party = ["quickslides"]
 
 [tool.mypy]
 python_version = "3.12"

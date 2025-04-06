@@ -1,1 +1,1 @@
-"""Test package for mdslides."""
+"""Test package for quickslides."""

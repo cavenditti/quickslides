@@ -72,10 +72,16 @@ def convert_token(token: dict[str, Any]) -> str:
             return f"#quote[{convert_ast_to_typst(token['children'])}]"
         case "list":
             list_items = []
-            marker = "+" if token.get("ordered", False) else "-"
+            is_ordered = token["attrs"].get("ordered", False)
+            depth = token["attrs"].get("depth", 0)
+            marker = "+" if is_ordered else "-"
+
             for item in token["children"]:
+                # Handle nested lists
                 item_content = convert_ast_to_typst(item["children"]).strip()
-                list_items.append(f"{marker} {item_content}")
+                # Indent base on depth
+                list_items.append(f"{"  " * depth}{marker} {item_content}")
+
             return "\n".join(list_items) + "\n\n"
         case "heading":
             level = token["attrs"]["level"]

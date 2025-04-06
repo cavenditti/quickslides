@@ -1,18 +1,18 @@
 [project]
 name = "mdslides-typst"
-version = "0.1.2"
 description = "Convert Markdown to PDF slides using Typst and typslides"
+dynamic = ["version"]
 readme = "README.md"
 requires-python = ">=3.12"
-license = {text = "MIT"}
-dependencies = [
-    "click",
-    "rich",
-]
+license = { text = "MIT" }
+dependencies = ["click", "rich"]
 
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "versioningit"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+source = "versioningit"
 
 # Change import package name to mdslides instead of mdslides-typst
 [tool.hatch.build.targets.wheel]
@@ -48,7 +48,4 @@ disallow_untyped_defs = true
 disallow_incomplete_defs = true
 
 [dependency-groups]
-dev = [
-    "pytest>=8.3.5",
-    "ruff>=0.11.4",
-]
+dev = ["pytest>=8.3.5", "ruff>=0.11.4"]

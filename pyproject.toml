@@ -1,11 +1,7 @@
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
 [project]
-name = "mdslides"
+name = "mdslides-typst"
 version = "0.1.0"
-description = "Convert Markdown to Typst slides"
+description = "Convert Markdown to PDF slides using Typst and typslides"
 readme = "README.md"
 requires-python = ">=3.12"
 license = {text = "MIT"}
@@ -13,6 +9,14 @@ dependencies = [
     "click",
     "rich",
 ]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+# Change import package name to mdslides instead of mdslides-typst
+[tool.hatch.build.targets.wheel]
+packages = ["mdslides"]
 
 [project.scripts]
 mdslides = "mdslides.cli:main"

@@ -18,6 +18,9 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.wheel]
 packages = ["mdslides"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"typslides" = "typslides"
+
 [project.scripts]
 mdslides = "mdslides.cli:main"
 

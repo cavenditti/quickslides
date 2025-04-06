@@ -1,4 +1,4 @@
-# MDSlides
+# mdslides-typst
 
 Convert Markdown files to PDF slides presentations, using [typst](https://github.com/typst/typst) and [typeslides](https://github.com/cavenditti/typslides).
 

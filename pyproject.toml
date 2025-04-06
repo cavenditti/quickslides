@@ -14,6 +14,10 @@ build-backend = "hatchling.build"
 [tool.hatch.version]
 source = "versioningit"
 
+[tool.versioningit.vcs]
+method = "git"
+default-tag = "0.0.0" # Needed in case we don't have any tag, i.e. in GitHub Actions
+
 [tool.hatch.build.targets.wheel.force-include]
 "typslides" = "typslides"
 

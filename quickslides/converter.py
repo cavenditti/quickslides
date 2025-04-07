@@ -29,13 +29,29 @@ def convert_ast_to_typst(tokens: list[dict[str, Any]]) -> str:
 def escape_typst_chars(text: str) -> str:
     """Escape characters that have special meaning in Typst."""
     # List of characters that need escaping in Typst (square brackets, braces, and other special chars)
-    special_chars = r'#$\\{}[]_*"`'
+    special_chars = r'#\\{}$[]_*"`'
 
     # Create a regex pattern that matches any special character
     pattern = re.compile(f"([{re.escape(special_chars)}])")
 
-    # Add a backslash before each special character
-    return pattern.sub(r"\\\1", text)
+    # First, protect math expressions:
+    # Find all math expressions (both inline $...$ and display $$...$$)
+    math_pattern = re.compile(r"(\$\$.*?\$\$|\$.*?\$)", re.DOTALL)
+    parts = []
+    last_end = 0
+
+    for match in math_pattern.finditer(text):
+        # Add escaped text before math
+        parts.append(pattern.sub(r"\\\1", text[last_end : match.start()]))
+        # Add unmodified math expression
+        parts.append(match.group(0))
+        last_end = match.end()
+
+    # Add remaining text (escaped)
+    if last_end < len(text):
+        parts.append(pattern.sub(r"\\\1", text[last_end:]))
+
+    return "".join(parts)
 
 
 def convert_token(token: dict[str, Any]) -> str:

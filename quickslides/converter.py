@@ -102,7 +102,7 @@ def convert_token(token: dict[str, Any]) -> str:
             return ""
 
     # Use the handler from the dictionary, or otherwise process children if available
-    return token_handlers.get(token_type, _handle_default)(token)
+    return token_handlers.get(token_type, _handle_default)(token) + " "
 
 
 def indent_lines(text: str, indent: str = "  ") -> str:

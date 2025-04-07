@@ -6,6 +6,20 @@ from typing import Any
 import mistune
 
 
+def remove_trailing_whitespaces(text: str) -> str:
+    """
+    Remove trailing whitespaces from each line in the text.
+    """
+    return "\n".join(map(lambda x: x.rstrip(), text.splitlines()))
+
+
+def remove_extra_newlines(text: str) -> str:
+    """
+    Remove extra newlines from the text.
+    """
+    return re.sub(r"\n{2,}", "\n", text)
+
+
 def convert_text(text: str) -> str:
     """Convert markdown text to typst using mistune parser."""
     # Parse markdown to AST
@@ -61,19 +75,19 @@ def convert_token(token: dict[str, Any]) -> str:
     # dict mapping token types to handler functions
     token_handlers = {
         "paragraph": lambda t: convert_ast_to_typst(t["children"]) + "\n\n",
-        "text": lambda t: escape_typst_chars(t["raw"]),
-        "emphasis": lambda t: f"_{convert_ast_to_typst(t['children'])}_",
-        "strong": lambda t: f"*{convert_ast_to_typst(t['children'])}*",
+        "text": lambda t: escape_typst_chars(t["raw"]) + " ",
+        "emphasis": lambda t: f"_{convert_ast_to_typst(t['children'])}_" + " ",
+        "strong": lambda t: f"*{convert_ast_to_typst(t['children'])}*" + " ",
         "link": lambda t: f'#link("{t["attrs"]["url"]}")[{escape_typst_chars(convert_ast_to_typst(t["children"]))}]',
         "image": lambda t: (
-            f'#figure(#image("{t["attrs"]["url"]}"), caption: "{escape_typst_chars(t.get("alt", ""))}")'
+            f'#figure(#image("{t["attrs"]["url"]}"), caption: "{escape_typst_chars(t.get("alt", ""))}") '
             if t.get("alt", "")
-            else f'#image("{t["attrs"]["url"]}")'
+            else f'#image("{t["attrs"]["url"]}") '
         ),
-        "codespan": lambda t: f"`{t['raw']}`",
+        "codespan": lambda t: f"`{t['raw']}` ",
         "code": lambda t: f"```{t.get('lang', '')}\n{t['text']}\n```",
         "block_text": lambda t: convert_ast_to_typst(t["children"]),
-        "block_quote": lambda t: f"#quote[{convert_ast_to_typst(t['children'])}]",
+        "block_quote": lambda t: f"#quote[{convert_ast_to_typst(t['children'])}] ",
         "list": lambda t: _handle_list(t),
         "heading": lambda t: f"={'=' * (t['attrs']['level'] - 1)} {convert_ast_to_typst(t['children'])}\n\n",
         "thematic_break": lambda t: "#line(length: 100%)\n\n",
@@ -83,10 +97,10 @@ def convert_token(token: dict[str, Any]) -> str:
     def _handle_list(t: dict[str, Any]) -> str:
         """Handle list conversion helper."""
         return (
-            "\n".join(
+            "".join(
                 [
-                    f"{'  ' * t['attrs'].get('depth', 0)}{'+' if t['attrs'].get('ordered', False) else '-'} "
-                    f"{convert_ast_to_typst(item['children']).strip()}"
+                    f"{'\n' + '  ' * t['attrs'].get('depth', 0)}{'+' if t['attrs'].get('ordered', False) else '-'} "
+                    f"{convert_ast_to_typst(item['children'])}"
                     for item in t["children"]
                 ]
             )
@@ -118,7 +132,7 @@ def convert_token(token: dict[str, Any]) -> str:
             return ""
 
     # Use the handler from the dictionary, or otherwise process children if available
-    return token_handlers.get(token_type, _handle_default)(token) + " "
+    return token_handlers.get(token_type, _handle_default)(token)
 
 
 def indent_lines(text: str, indent: str = "  ") -> str:
@@ -134,10 +148,6 @@ def convert_markdown_to_typst(
 
     Args:
         markdown_content: The markdown content to convert
-        title: The presentation title
-        subtitle: The presentation subtitle
-        author: The presentation author
-        info: Additional presentation info
 
     Returns:
         The typst document as a string
@@ -160,22 +170,18 @@ def convert_markdown_to_typst(
     # Generate the typst document
     typst_content = generate_typst_document(front_matter, markdown_content)
 
-    return typst_content
+    return remove_extra_newlines(remove_trailing_whitespaces(typst_content))
 
 
 def generate_typst_header(front_matter: dict[str, str]) -> str:
     """
-    Generate a complete typst document from markdown content.
+    Generate beginning of typst document from document metadata.
 
     Args:
-        markdown_content: The markdown content to convert
-        title: The presentation title
-        subtitle: The presentation subtitle
-        author: The presentation author
-        info: Additional presentation info
+        front_matter: The document metadata as per markdown front data
 
     Returns:
-        The complete typst document as a string
+        The beginning of the typst document as a string
     """
 
     # Extract presentation info
@@ -223,11 +229,8 @@ def generate_typst_document(
     Generate a complete typst document from markdown content.
 
     Args:
-        markdown_content: The markdown content to convert
-        title: The presentation title
-        subtitle: The presentation subtitle
-        author: The presentation author
-        info: Additional presentation info
+        front_matter: The document metadata as per markdown front data
+        markdown_content: The markdown content to convert (rest of the document)
 
     Returns:
         The complete typst document as a string

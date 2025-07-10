@@ -6,13 +6,17 @@ Convert Markdown files to PDF slides presentations, using [typst](https://github
 
 ### Command Line
 
+If you use [uv](https://github.com/astral-sh/uv), you can run `quickslides` directly from the command line by using `uvx`:
+
 ```bash
 # Basic usage
-quickslides your_presentation.md
+uvx quickslides your_presentation.md
 
 # Specify output typst file
-quickslides your_presentation.md --no-compile -o custom_output.typ
+uvx quickslides your_presentation.md --no-compile -o custom_output.typ
 ```
+
+Otherwise you can run install `quickslides` with your Python package manager of choice, and then run it from the command line.
 
 ### As a Library
 
